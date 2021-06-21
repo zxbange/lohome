@@ -5,9 +5,64 @@
     <description>关于程序与设计、黑客与画家 | 黄玄，Web &amp; Mobile Lover，Software Engineer，UX Designer | 这里是 @Hux黄玄 的个人博客，与你一起发现更大的世界。</description>
     <link>https://huangxuan.me/</link>
     <atom:link href="https://huangxuan.me/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Fri, 11 Jun 2021 11:04:04 +0800</pubDate>
-    <lastBuildDate>Fri, 11 Jun 2021 11:04:04 +0800</lastBuildDate>
+    <pubDate>Mon, 21 Jun 2021 23:19:15 +0800</pubDate>
+    <lastBuildDate>Mon, 21 Jun 2021 23:19:15 +0800</lastBuildDate>
     <generator>Jekyll v4.2.0</generator>
+    
+      <item>
+        <title>MySQL间隙锁</title>
+        <description>&lt;h1 id=&quot;mysql间隙锁&quot;&gt;MySQL间隙锁&lt;/h1&gt;
+&lt;p&gt;MySQL间隙锁、next-key lock加锁规则：两个原则，两个优化，一个bug：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;原则 1：加锁的基本单位是 next-key lock。next-key lock 是前开后闭区间。&lt;/li&gt;
+  &lt;li&gt;原则 2：查找过程中访问到的对象才会加锁。&lt;/li&gt;
+  &lt;li&gt;优化 1：索引上的等值查询，给唯一索引加锁的时候，next-key lock 退化为行锁。&lt;/li&gt;
+  &lt;li&gt;优化 2：索引上的等值查询，向右遍历时且最后一个值不满足等值条件的时候，next-key lock 退化为间隙锁。&lt;/li&gt;
+  &lt;li&gt;一个 bug：唯一索引上的范围查询会访问到不满足条件的第一个值为止。（目前已修复）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;死锁&quot;&gt;死锁&lt;/h3&gt;
+&lt;p&gt;trx1:&lt;/p&gt;
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;t&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;lock&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;share&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;trx2:&lt;/p&gt;
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;t&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;desc&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;update&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;两个语句同时执行，会产生死锁，因为加锁是一个个加的。&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;“lock in share mode”的这条语句，持有 c=5 的记录锁，在等 c=10 的锁；&lt;/li&gt;
+  &lt;li&gt;“for update”这个语句，持有 c=20 和 c=10 的记录锁，在等 c=5 的记录锁。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;锁扩大&quot;&gt;锁扩大&lt;/h3&gt;
+&lt;p&gt;trx1:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-SQL&quot;&gt;begin;
+select * from t where id&amp;gt;10 and id&amp;lt;15 for update;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;trx2:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-SQL&quot;&gt;delete from t where id=10;
+(Query OK)
+insert into t values(10,10);
+(blocked)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;由于 delete 操作把 id=10 这一行删掉了，原来的两个间隙 (5,10)、(10,15）变成了一个 (5,15)。
+间隙锁是由间隙的右边记录定义的。&lt;/p&gt;
+</description>
+        <pubDate>Tue, 15 Jun 2021 11:31:29 +0800</pubDate>
+        <link>https://huangxuan.me/mysql/2021/06/15/MySQL%E9%97%B4%E9%9A%99%E9%94%81/</link>
+        <guid isPermaLink="true">https://huangxuan.me/mysql/2021/06/15/MySQL%E9%97%B4%E9%9A%99%E9%94%81/</guid>
+        
+        
+        <category>MySQL</category>
+        
+      </item>
     
       <item>
         <title>中国高等教育的系统性失败</title>
@@ -2278,25 +2333,6 @@ When this happens, it is unpredictable which instance will be found first by the
         <category>SF (软件基础)</category>
         
         <category>QC (Quickcheck)</category>
-        
-        <category>Coq</category>
-        
-        <category>笔记</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>「SF-PLF」19 PE</title>
-        <description>&lt;p&gt;TBD&lt;/p&gt;
-</description>
-        <pubDate>Tue, 19 Mar 2019 00:00:00 +0800</pubDate>
-        <link>https://huangxuan.me/2019/03/19/sf-plf-19-partial-eval/</link>
-        <guid isPermaLink="true">https://huangxuan.me/2019/03/19/sf-plf-19-partial-eval/</guid>
-        
-        <category>SF (软件基础)</category>
-        
-        <category>PLF (编程语言基础)</category>
         
         <category>Coq</category>
         
