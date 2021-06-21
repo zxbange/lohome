@@ -1,4 +1,4 @@
-[Abbott Blog](https://huangxuan.me)
+[Hux Blog](https://huangxuan.me)
 ================================
 
 > I never expected this to become popular 🤯 .
