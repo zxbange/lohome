@@ -5,102 +5,37 @@
     <description>记录</description>
     <link>/lohome/</link>
     <atom:link href="/lohome/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Tue, 22 Jun 2021 11:35:19 +0800</pubDate>
-    <lastBuildDate>Tue, 22 Jun 2021 11:35:19 +0800</lastBuildDate>
+    <pubDate>Tue, 22 Jun 2021 14:32:10 +0800</pubDate>
+    <lastBuildDate>Tue, 22 Jun 2021 14:32:10 +0800</lastBuildDate>
     <generator>Jekyll v4.2.0</generator>
     
       <item>
-        <title>MySQL间隙锁</title>
-        <description>&lt;h1 id=&quot;mysql间隙锁&quot;&gt;MySQL间隙锁&lt;/h1&gt;
-&lt;p&gt;MySQL间隙锁、next-key lock加锁规则：两个原则，两个优化，一个bug：&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;原则 1：加锁的基本单位是 next-key lock。next-key lock 是前开后闭区间。&lt;/li&gt;
-  &lt;li&gt;原则 2：查找过程中访问到的对象才会加锁。&lt;/li&gt;
-  &lt;li&gt;优化 1：索引上的等值查询，给唯一索引加锁的时候，next-key lock 退化为行锁。&lt;/li&gt;
-  &lt;li&gt;优化 2：索引上的等值查询，向右遍历时且最后一个值不满足等值条件的时候，next-key lock 退化为间隙锁。&lt;/li&gt;
-  &lt;li&gt;一个 bug：唯一索引上的范围查询会访问到不满足条件的第一个值为止。（目前已修复）&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;死锁&quot;&gt;死锁&lt;/h3&gt;
-&lt;p&gt;trx1:&lt;/p&gt;
-&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
-2
-&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;t&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;lock&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;share&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;trx2:&lt;/p&gt;
-&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
-&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;t&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;desc&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;update&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;两个语句同时执行，会产生死锁，因为加锁是一个个加的。&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;“lock in share mode”的这条语句，持有 c=5 的记录锁，在等 c=10 的锁；&lt;/li&gt;
-  &lt;li&gt;“for update”这个语句，持有 c=20 和 c=10 的记录锁，在等 c=5 的记录锁。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;锁扩大&quot;&gt;锁扩大&lt;/h3&gt;
-&lt;p&gt;trx1:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-SQL&quot;&gt;begin;
-select * from t where id&amp;gt;10 and id&amp;lt;15 for update;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;trx2:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-SQL&quot;&gt;delete from t where id=10;
-(Query OK)
-insert into t values(10,10);
-(blocked)
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;由于 delete 操作把 id=10 这一行删掉了，原来的两个间隙 (5,10)、(10,15）变成了一个 (5,15)。
-间隙锁是由间隙的右边记录定义的。&lt;/p&gt;
+        <title>你好小可爱</title>
+        <description>&lt;p&gt;“Yeah, Start Our Sweet Life”&lt;/p&gt;
 </description>
-        <pubDate>Tue, 15 Jun 2021 11:31:29 +0800</pubDate>
-        <link>/lohome/mysql/2021/06/15/MySQL%E9%97%B4%E9%9A%99%E9%94%81/</link>
-        <guid isPermaLink="true">/lohome/mysql/2021/06/15/MySQL%E9%97%B4%E9%9A%99%E9%94%81/</guid>
+        <pubDate>Thu, 04 Mar 2021 21:13:14 +0800</pubDate>
+        <link>/lohome/%E7%9B%B8%E8%A7%81/2021/03/04/%E4%BD%A0%E5%A5%BD%E5%B0%8F%E5%8F%AF%E7%88%B1/</link>
+        <guid isPermaLink="true">/lohome/%E7%9B%B8%E8%A7%81/2021/03/04/%E4%BD%A0%E5%A5%BD%E5%B0%8F%E5%8F%AF%E7%88%B1/</guid>
+        
+        <category>一见钟情</category>
         
         
-        <category>MySQL</category>
+        <category>相见</category>
         
       </item>
     
       <item>
-        <title>中国高等教育的系统性失败</title>
-        <description>&lt;blockquote&gt;
-  &lt;p&gt;该回答在知乎问题&lt;a href=&quot;https://www.zhihu.com/question/439622084/answer/1685314467&quot;&gt;「如何评价上海交通大学 18 级计算机系第一名「迟先生」的言论？」&lt;/a&gt; 下无原因被夹。
-询问我的「专属小管家」多次后仍然给不出任何原因与具体修改意见，自己多次尝试小幅修改无果，干脆直接将原文发上来吧。&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;高票 &lt;a href=&quot;https://www.zhihu.com/question/439622084/answer/1681505518&quot;&gt;@Youngster38324 的回答&lt;/a&gt;透露出来的本质上是「&lt;strong&gt;中国高等教育的系统性失败&lt;/strong&gt;」，逐层来看:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;「&lt;strong&gt;进大学前唯分数和同质化教育&lt;/strong&gt;」导致了太多人去大学后根本不知道自己要干嘛，很多人专业根本就不是自己选的更不要说知道自己有没有兴趣了，即便是很多高分考生也路径依赖地以为继续努力填鸭就能成功，没有意识到高考后的人生已经换赛道了。这里对比美国高中生的 AP（Advanced Placement）预科制度以及整体社会鼓励向自我发展看而不是向钱看的风气。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;「&lt;strong&gt;进大学后专业制度没有容错性&lt;/strong&gt;」，即便已经发现自己不喜欢被录取专业了也没有办法，因为转专业制度毫无人性（通常要求你先要在你已经不喜欢了的本专业内卷到班级前多少名）。对比美国本科，专业可以 undecided（先上课再决定专业，比如经典的哈佛 CS50，你上下来感兴趣了再去选 CS）；学位本身只是某个学科下课程学分累计的自然结果，因此可以灵活的转专业与多学位；班级这种促进内卷的概念被弱化，强调跟自己比关注个人的成长，学生自己控制上几年课，念几个学位，中间休学一下都没关系。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;前两步的结果就是导致大学为了毕业率把「&lt;strong&gt;评判标准搞成了大锅饭平均主义&lt;/strong&gt;」，为了能够每年顺利向社会输送一批（80% 将来都不会从事本专业）的人才，打分根据每年学生情况动态规划自适应，把大学搞成了「严进宽出」。相反美国的大学教育强调「宽进严出」，无论你底子如何，无论重修几次，你只要通过了某个（相对稳定的）客观标准就是合格，为了保证该制度的机械性运作，辅以严格的日常作业计分，对「作弊」零容忍（自动化判重，发现一次重修两次退学）。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;平均主义进一步导致「&lt;strong&gt;课程设置没有灵活性无法自定义&lt;/strong&gt;」，老师不但要照顾及格率还有一颗圣母心希望那些对专业没什么兴趣的人能好歹学到点东西，同时又真心欣赏且想要给予好学的尖子生资源，最后即便绞尽脑汁了也还是只能弄出个在差生里下限高在尖子生里上限低的课程安排两面不当人 —— 尖子生觉得课程要求太低不能激发自己的潜力喂不饱（常见于私下要求加难度或者去无学分旁听），摸鱼的觉得老师影响了我的快乐学习（常见于课堂上一布置作业下面就叫苦连天）该挂还是挂或者 60 分万岁。对比美国，学生的课程表可以自行安排，通常一个课会开多个班次照顾灵活性，学霸可以比别人多上任意节课，也可以跨专业选课或者减少课程增加实习或研究，而且难度自选只要你点过前置技能就行。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;有类似迟先生这样诉求的人很多，可是一个系统很难由系统内的个体改变，所以很多个体选择了做局部优化趋利避害陪玩成为既得利益者，或者全局优化更换自己所处的系统。&lt;/p&gt;
-
-&lt;p&gt;只要所处系统里的大部分个体都已经默许了这个游戏规则，无论迟先生是「凡尔赛」还是「理想主义」，改变赛道规则就会被其他个体认为侵害到利益。小孩才分对错，成年人的屁股都是歪得，都是各取所需。&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;都是这个时代的缩影。&lt;/strong&gt;&lt;/p&gt;
-
+        <title>你吹过我吹过的晚风</title>
+        <description>&lt;p&gt;我们生活在同一个地方十多年，却从未相见，你走过我走过的路，吹过我吹过的风，却总是擦肩而过&lt;/p&gt;
 </description>
-        <pubDate>Tue, 19 Jan 2021 20:00:00 +0800</pubDate>
-        <link>/lohome/2021/01/19/the-systematic-failure-of-higher-education-in-china/</link>
-        <guid isPermaLink="true">/lohome/2021/01/19/the-systematic-failure-of-higher-education-in-china/</guid>
+        <pubDate>Wed, 30 Dec 2020 22:00:00 +0800</pubDate>
+        <link>/lohome/%E8%B7%AF%E8%BF%87/2020/12/30/%E4%BD%A0%E5%90%B9%E8%BF%87%E6%88%91%E5%90%B9%E8%BF%87%E7%9A%84%E6%99%9A%E9%A3%8E/</link>
+        <guid isPermaLink="true">/lohome/%E8%B7%AF%E8%BF%87/2020/12/30/%E4%BD%A0%E5%90%B9%E8%BF%87%E6%88%91%E5%90%B9%E8%BF%87%E7%9A%84%E6%99%9A%E9%A3%8E/</guid>
         
-        <category>被夹</category>
+        <category>擦肩而过</category>
         
+        
+        <category>路过</category>
         
       </item>
     
