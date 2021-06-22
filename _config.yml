@@ -12,9 +12,9 @@ future: true
 
 # SNS settings
 RSS: false
-weibo_username:     zhangx
-zhihu_username:     zhangx
-github_username:    zhangx
+weibo_username:     u/2425844640
+zhihu_username:     zhang-xin-28-29-42
+github_username:    zxbange
 twitter_username:   zhangx
 #facebook_username:  zhangx
 #linkedin_username:  firstname-lastname-idxxxx
